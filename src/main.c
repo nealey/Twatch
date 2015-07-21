@@ -41,7 +41,15 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
     int hour = 3 * (i+1);
 
     if (1 && clock_is_24h_style()) {
-      hour += 12;
+      time_t epoch;
+      struct tm *now;
+
+      time(&epoch);
+      now = localtime(&epoch);
+
+      if (now->tm_hour > 12) {
+	hour += 12;
+      }
     }
 
     snprintf(s_hour[i], 3, "%d", hour);
@@ -120,11 +128,6 @@ static void window_load(Window *window) {
   for (int i = 0; i < 4; i += 1) {
     int x, y;
     GTextAlignment align;
-    int hour = 3 * (i+1);
-
-    if (1 && clock_is_24h_style()) {
-      hour += 12;
-    }
 
     switch (i) {
     case 0:
