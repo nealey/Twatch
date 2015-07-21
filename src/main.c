@@ -5,6 +5,10 @@
 #define BLACK
 #endif
 
+#if 0
+#define SECONDS
+#endif
+
 #ifdef BLACK
 #define FG GColorWhite
 #define BG GColorBlack
@@ -21,12 +25,27 @@ static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
 static char s_mon_buffer[4], s_day_buffer[6];
 
+static TextLayer *s_hour_label[4];
+static char s_hour[4][4];
+
 static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, BG);
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
   graphics_context_set_fill_color(ctx, FG);
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
     gpath_draw_filled(ctx, s_tick_paths[i]);
+  }
+
+  // Draw numbers
+  for (int i = 0; i < 4; i += 1) {
+    int hour = 3 * (i+1);
+
+    if (1 && clock_is_24h_style()) {
+      hour += 12;
+    }
+
+    snprintf(s_hour[i], 3, "%d", hour);
+    text_layer_set_text(s_hour_label[i], s_hour[i]);
   }
 }
 
@@ -64,8 +83,8 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_outline(ctx, s_hour_arrow);
 
   // dot in the middle
-  //graphics_context_set_fill_color(ctx, BG);
-  //graphics_fill_rect(ctx, GRect(bounds.size.w / 2 - 1, bounds.size.h / 2 - 1, 3, 3), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, FG);
+  graphics_fill_circle(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 2);
 }
 
 static void date_update_proc(Layer *layer, GContext *ctx) {
@@ -87,6 +106,9 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(window));
 }
 
+#define NUM_HEIGHT 42
+#define NUM_WIDTH 50
+
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
@@ -95,23 +117,62 @@ static void window_load(Window *window) {
   layer_set_update_proc(s_simple_bg_layer, bg_update_proc);
   layer_add_child(window_layer, s_simple_bg_layer);
 
+  for (int i = 0; i < 4; i += 1) {
+    int x, y;
+    GTextAlignment align;
+    int hour = 3 * (i+1);
+
+    if (1 && clock_is_24h_style()) {
+      hour += 12;
+    }
+
+    switch (i) {
+    case 0:
+      x = 140 - (NUM_WIDTH); y = 80 - (NUM_HEIGHT/2);
+      align = GTextAlignmentRight;
+      break;
+    case 1:
+      x = 72 - (NUM_WIDTH/2); y = 122;
+      align = GTextAlignmentCenter;
+      break;
+    case 2:
+      x = 4; y = 80 - (NUM_HEIGHT/2);
+      align = GTextAlignmentLeft;
+      break;
+    case 3:
+      x = 72 - (NUM_WIDTH/2); y = 4;
+      align = GTextAlignmentCenter;
+      break;
+    }
+
+    s_hour_label[i] = text_layer_create(GRect(x, y, NUM_WIDTH, NUM_HEIGHT));
+    text_layer_set_text_alignment(s_hour_label[i], align);
+    text_layer_set_background_color(s_hour_label[i], BG);
+    text_layer_set_text_color(s_hour_label[i], FG);
+    text_layer_set_font(s_hour_label[i], fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
+
+    layer_add_child(s_simple_bg_layer, text_layer_get_layer(s_hour_label[i]));
+  }
+
   s_date_layer = layer_create(bounds);
   layer_set_update_proc(s_date_layer, date_update_proc);
   layer_add_child(window_layer, s_date_layer);
 
-  s_mon_label = text_layer_create(GRect(117, 145, 27, 20));
+  s_mon_label = text_layer_create(GRect(114, 140, 27, 24));
+  text_layer_set_text_alignment(s_mon_label, GTextAlignmentRight);
   text_layer_set_text(s_mon_label, s_day_buffer);
   text_layer_set_background_color(s_mon_label, BG);
   text_layer_set_text_color(s_mon_label, FG);
-  text_layer_set_font(s_mon_label, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_font(s_mon_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
   layer_add_child(s_date_layer, text_layer_get_layer(s_mon_label));
 
-  s_day_label = text_layer_create(GRect(123, 130, 18, 20));
+  s_day_label = text_layer_create(GRect(121, 123, 20, 24));
+  text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, BG);
   text_layer_set_text_color(s_day_label, FG);
-  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
 
