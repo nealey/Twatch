@@ -7,7 +7,14 @@
     "longName": "Twatch",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+	    {
+		"characterRegex": "[12345689]",
+		"file": "fonts/AveriaSerifLibre-Regular.ttf",
+		"name": "FONT_48",
+		"type": "font"
+	    }
+	]
     },
     "sdkVersion": "3",
     "shortName": "Twatch",

@@ -47,7 +47,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
       time(&epoch);
       now = localtime(&epoch);
 
-      if (now->tm_hour > 12) {
+      if ((now->tm_hour > 12) || (now->tm_hour == 0)) {
 	hour += 12;
       }
     }
@@ -114,8 +114,10 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(window));
 }
 
-#define NUM_HEIGHT 42
-#define NUM_WIDTH 50
+#define NUM_HEIGHT 50
+#define NUM_WIDTH 54
+#define BASELINE_OFFSET -7
+#define NUM_FONT RESOURCE_ID_FONT_48
 
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
@@ -131,19 +133,19 @@ static void window_load(Window *window) {
 
     switch (i) {
     case 0:
-      x = 140 - (NUM_WIDTH); y = 80 - (NUM_HEIGHT/2);
+      x = 140 - (NUM_WIDTH); y = 80 - (NUM_HEIGHT/2) + BASELINE_OFFSET;
       align = GTextAlignmentRight;
       break;
     case 1:
-      x = 72 - (NUM_WIDTH/2); y = 122;
+      x = 72 - (NUM_WIDTH/2); y = 122 + BASELINE_OFFSET;
       align = GTextAlignmentCenter;
       break;
     case 2:
-      x = 4; y = 80 - (NUM_HEIGHT/2);
+      x = 4; y = 80 - (NUM_HEIGHT/2) + BASELINE_OFFSET;
       align = GTextAlignmentLeft;
       break;
     case 3:
-      x = 72 - (NUM_WIDTH/2); y = 4;
+      x = 72 - (NUM_WIDTH/2); y = BASELINE_OFFSET;
       align = GTextAlignmentCenter;
       break;
     }
@@ -152,7 +154,7 @@ static void window_load(Window *window) {
     text_layer_set_text_alignment(s_hour_label[i], align);
     text_layer_set_background_color(s_hour_label[i], BG);
     text_layer_set_text_color(s_hour_label[i], FG);
-    text_layer_set_font(s_hour_label[i], fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
+    text_layer_set_font(s_hour_label[i], fonts_load_custom_font(resource_get_handle(NUM_FONT)));
 
     layer_add_child(s_simple_bg_layer, text_layer_get_layer(s_hour_label[i]));
   }
@@ -170,10 +172,10 @@ static void window_load(Window *window) {
 
   layer_add_child(s_date_layer, text_layer_get_layer(s_mon_label));
 
-  s_day_label = text_layer_create(GRect(121, 123, 20, 24));
+  s_day_label = text_layer_create(GRect(121, 122, 20, 24));
   text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
   text_layer_set_text(s_day_label, s_day_buffer);
-  text_layer_set_background_color(s_day_label, BG);
+  text_layer_set_background_color(s_day_label, GColorClear);
   text_layer_set_text_color(s_day_label, FG);
   text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 
