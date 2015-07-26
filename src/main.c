@@ -19,12 +19,13 @@
 
 static Window *window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
-static TextLayer *s_day_label, *s_mon_label;
+static TextLayer *s_bt_label, *s_day_label, *s_mon_label;
 
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
 static char s_mon_buffer[4], s_day_buffer[6];
 
+static bool bt_connected = true;
 static TextLayer *s_hour_label[4];
 static char s_hour[4][4];
 
@@ -100,6 +101,12 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
   struct tm *t = localtime(&now);
   char *b = s_day_buffer;
 
+  if (bt_connected) {
+    text_layer_set_text(s_bt_label, "");
+  } else {
+    text_layer_set_text(s_bt_label, "");
+  }
+  
   strftime(s_mon_buffer, sizeof(s_mon_buffer), "%b", t);
   text_layer_set_text(s_mon_label, s_mon_buffer);
 
@@ -163,13 +170,20 @@ static void window_load(Window *window) {
   layer_set_update_proc(s_date_layer, date_update_proc);
   layer_add_child(window_layer, s_date_layer);
 
+  s_bt_label = text_layer_create(GRect(15, 90, 52, 52));
+  text_layer_set_text_alignment(s_bt_label, GTextAlignmentLeft);
+  text_layer_set_text(s_bt_label, "");
+  text_layer_set_background_color(s_bt_label, GColorClear);
+  text_layer_set_text_color(s_bt_label, FG);
+  text_layer_set_font(s_bt_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SYMBOLS_52)));
+  layer_add_child(s_date_layer, text_layer_get_layer(s_bt_label));
+
   s_mon_label = text_layer_create(GRect(114, 140, 27, 24));
   text_layer_set_text_alignment(s_mon_label, GTextAlignmentRight);
   text_layer_set_text(s_mon_label, s_day_buffer);
   text_layer_set_background_color(s_mon_label, BG);
   text_layer_set_text_color(s_mon_label, FG);
   text_layer_set_font(s_mon_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-
   layer_add_child(s_date_layer, text_layer_get_layer(s_mon_label));
 
   s_day_label = text_layer_create(GRect(121, 122, 20, 24));
@@ -178,7 +192,6 @@ static void window_load(Window *window) {
   text_layer_set_background_color(s_day_label, GColorClear);
   text_layer_set_text_color(s_day_label, FG);
   text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
 
   s_hands_layer = layer_create(bounds);
@@ -194,6 +207,14 @@ static void window_unload(Window *window) {
   text_layer_destroy(s_mon_label);
 
   layer_destroy(s_hands_layer);
+}
+
+static void bt_handler(bool connected) {
+  bt_connected = connected;
+  if (! connected) {
+    vibes_long_pulse();
+  }
+  layer_mark_dirty(s_date_layer);
 }
 
 static void init() {
@@ -220,6 +241,9 @@ static void init() {
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
     s_tick_paths[i] = gpath_create(&ANALOG_BG_POINTS[i]);
   }
+
+  bluetooth_connection_service_subscribe(bt_handler);
+  bt_connected = bluetooth_connection_service_peek();
 
 #ifdef SECONDS
   tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
