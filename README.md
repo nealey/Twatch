@@ -11,6 +11,3 @@ like such things.
 Lastly, it vibrates if it loses the connection to the phone, which I
 suppose could be handy if you ever leave your phone lying around and
 mindlessly walk off.  Not that I would ever do such a thing.
-
-![12-hour](resources/screenshots/pebble-screenshot_2015-07-26_11-03-51.png)
-![24-hour](resources/screenshots/pebble-screenshot_2015-07-26_13-01-48.png)
