@@ -23,13 +23,13 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Natch",
+    "shortName": "Twatch",
     "targetPlatforms": [
         "aplite",
         "basalt",
         "chalk"
     ],
-    "uuid": "901f4c61-772a-4591-8fbc-2f807e3fd6ba",
+    "uuid": "e0b60de0-c43e-4dcd-817b-b60c1be26cb5",
     "versionLabel": "1.0",
     "watchapp": {
         "watchface": true
