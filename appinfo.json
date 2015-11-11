@@ -8,25 +8,26 @@
     "projectType": "native",
     "resources": {
         "media": [
-	    {
-		"characterRegex": "[12345689]",
-		"file": "fonts/AveriaSerifLibre-Regular.ttf",
-		"name": "FONT_48",
-		"type": "font"
-	    },
-	    {
-		"characterRegex": "[]",
-		"file": "fonts/fontawesome-webfont.ttf",
-		"name": "SYMBOLS_52",
-		"type": "font"
-	    }
-	]
+            {
+                "characterRegex": "[\uf10b]",
+                "file": "fonts/fontawesome-webfont.ttf",
+                "name": "SYMBOLS_52",
+                "type": "font"
+            },
+            {
+                "characterRegex": "[12345689]",
+                "file": "fonts/AveriaSerifLibre-Regular.ttf",
+                "name": "FONT_48",
+                "type": "font"
+            }
+        ]
     },
     "sdkVersion": "3",
     "shortName": "Natch",
     "targetPlatforms": [
         "aplite",
-        "basalt"
+        "basalt",
+        "chalk"
     ],
     "uuid": "901f4c61-772a-4591-8fbc-2f807e3fd6ba",
     "versionLabel": "1.0",

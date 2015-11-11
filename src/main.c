@@ -1,22 +1,6 @@
 #include <pebble.h>
 #include "twatch.h"
 
-#if 0
-#define BLACK
-#endif
-
-#if 0
-#define SECONDS
-#endif
-
-#ifdef BLACK
-#define FG GColorWhite
-#define BG GColorBlack
-#else
-#define FG GColorBlack
-#define BG GColorWhite
-#endif
-
 static Window *window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_bt_label, *s_day_label, *s_mon_label;
@@ -24,15 +8,19 @@ static TextLayer *s_bt_label, *s_day_label, *s_mon_label;
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
 static char s_mon_buffer[4], s_day_buffer[6];
-
-static bool bt_connected = true;
 static TextLayer *s_hour_label[4];
 static char s_hour[4][4];
 
+GColor fg;
+GColor bg;
+bool seconds = true;
+
+bool bt_connected = true;
+
 static void bg_update_proc(Layer *layer, GContext *ctx) {
-  graphics_context_set_fill_color(ctx, BG);
+  graphics_context_set_fill_color(ctx, bg);
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
-  graphics_context_set_fill_color(ctx, FG);
+  graphics_context_set_fill_color(ctx, fg);
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
     gpath_draw_filled(ctx, s_tick_paths[i]);
   }
@@ -49,7 +37,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
       now = localtime(&epoch);
 
       if ((now->tm_hour > 12) || (now->tm_hour == 0)) {
-	hour += 12;
+	      hour += 12;
       }
     }
 
@@ -64,24 +52,20 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
   
-#ifdef SECONDS
-  GPoint center = grect_center_point(&bounds);
-  int16_t second_hand_length = bounds.size.w / 2;
+  if (seconds) {
+    int32_t angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
+    GPoint inside = gpoint_from_polar(bounds, GOvalScaleModeFitCircle, angle);
+    GPoint outside = gpoint_from_polar(bounds, GOvalScaleModeFillCircle, angle);
+    int16_t second_hand_length = bounds.size.w / 2;
 
-  int32_t second_angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
-  GPoint second_hand = {
-    .x = (int16_t)(sin_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.x,
-    .y = (int16_t)(-cos_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.y,
-  };
-
-  // second hand
-  graphics_context_set_stroke_color(ctx, FG);
-  graphics_draw_line(ctx, second_hand, center);
-#endif
+    // second hand
+    graphics_context_set_stroke_color(ctx, fg);
+    graphics_draw_line(ctx, inside, outside);
+  }
 
   // minute/hour hand
-  graphics_context_set_fill_color(ctx, FG);
-  graphics_context_set_stroke_color(ctx, BG);
+  graphics_context_set_fill_color(ctx, fg);
+  graphics_context_set_stroke_color(ctx, bg);
 
   gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
   gpath_draw_filled(ctx, s_minute_arrow);
@@ -92,7 +76,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_outline(ctx, s_hour_arrow);
 
   // dot in the middle
-  graphics_context_set_fill_color(ctx, FG);
+  graphics_context_set_fill_color(ctx, fg);
   graphics_fill_circle(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 2);
 }
 
@@ -159,8 +143,8 @@ static void window_load(Window *window) {
 
     s_hour_label[i] = text_layer_create(GRect(x, y, NUM_WIDTH, NUM_HEIGHT));
     text_layer_set_text_alignment(s_hour_label[i], align);
-    text_layer_set_background_color(s_hour_label[i], BG);
-    text_layer_set_text_color(s_hour_label[i], FG);
+    text_layer_set_background_color(s_hour_label[i], bg);
+    text_layer_set_text_color(s_hour_label[i], fg);
     text_layer_set_font(s_hour_label[i], fonts_load_custom_font(resource_get_handle(NUM_FONT)));
 
     layer_add_child(s_simple_bg_layer, text_layer_get_layer(s_hour_label[i]));
@@ -174,15 +158,15 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_bt_label, GTextAlignmentLeft);
   text_layer_set_text(s_bt_label, "");
   text_layer_set_background_color(s_bt_label, GColorClear);
-  text_layer_set_text_color(s_bt_label, FG);
+  text_layer_set_text_color(s_bt_label, fg);
   text_layer_set_font(s_bt_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SYMBOLS_52)));
   layer_add_child(s_date_layer, text_layer_get_layer(s_bt_label));
 
   s_mon_label = text_layer_create(GRect(114, 140, 27, 24));
   text_layer_set_text_alignment(s_mon_label, GTextAlignmentRight);
   text_layer_set_text(s_mon_label, s_day_buffer);
-  text_layer_set_background_color(s_mon_label, BG);
-  text_layer_set_text_color(s_mon_label, FG);
+  text_layer_set_background_color(s_mon_label, bg);
+  text_layer_set_text_color(s_mon_label, fg);
   text_layer_set_font(s_mon_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   layer_add_child(s_date_layer, text_layer_get_layer(s_mon_label));
 
@@ -190,7 +174,7 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
-  text_layer_set_text_color(s_day_label, FG);
+  text_layer_set_text_color(s_day_label, fg);
   text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
 
@@ -218,6 +202,8 @@ static void bt_handler(bool connected) {
 }
 
 static void init() {
+  fg = GColorBlack;
+  bg = GColorWhite;
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
@@ -245,11 +231,11 @@ static void init() {
   bluetooth_connection_service_subscribe(bt_handler);
   bt_connected = bluetooth_connection_service_peek();
 
-#ifdef SECONDS
-  tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
-#else
-  tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
-#endif
+  if (seconds) {
+    tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+  } else {
+    tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
+  }
 }
 
 static void deinit() {
