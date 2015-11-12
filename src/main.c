@@ -5,8 +5,7 @@ static Window *window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_bt_label, *s_day_label, *s_mon_label;
 
-
-
+static GColor second_color;
 static GPath *s_tic_path;
 static GPath *s_second_arrow, *s_minute_arrow, *s_hour_arrow;
 static char s_mon_buffer[4], s_day_buffer[6];
@@ -81,9 +80,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
   if (seconds) {
     // second hand
-#ifdef PBL_COLOR
-    graphics_context_set_fill_color(ctx, GColorJaegerGreen);
-#endif
+    graphics_context_set_fill_color(ctx, second_color);
     gpath_rotate_to(s_second_arrow, TRIG_MAX_ANGLE * t->tm_sec / 60);
     gpath_draw_filled(ctx, s_second_arrow);
     //gpath_draw_outline(ctx, s_second_arrow);
@@ -235,9 +232,23 @@ static void bt_handler(bool connected) {
   layer_mark_dirty(s_date_layer);
 }
 
+static void in_received_handler(DictionaryIterator *rec, void *context) {
+  Tuple *sec_color_tuple = dict_find(rec, CONFIG_KEY_COLOR_SEC);
+  
+  if (sec_color_tuple) {
+    second_color = GColorFromHex(sec_color_tuple->value->int32);
+  }
+}
+
+static void in_dropped_handler(AppMessageResult reason, void *context) {
+  // What could we possibly do here?
+}
+
 static void init() {
   fg = GColorBlack;
   bg = GColorWhite;
+  second_color = COLOR_FALLBACK(GColorWindsorTan, GColorBlack);
+  
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
@@ -264,12 +275,16 @@ static void init() {
 
   bluetooth_connection_service_subscribe(bt_handler);
   bt_connected = bluetooth_connection_service_peek();
-
+  
   if (seconds) {
     tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
   } else {
     tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
   }
+  
+  app_message_register_inbox_received(in_received_handler);
+  app_message_register_inbox_dropped(in_dropped_handler);
+  app_message_open(256, 64);
 }
 
 static void deinit() {

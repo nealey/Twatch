@@ -1,7 +1,18 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "bluetooth": 1,
+        "color-bg": 2,
+        "color-day": 4,
+        "color-hr": 9,
+        "color-min": 8,
+        "color-mon": 5,
+        "color-num": 3,
+        "color-sec": 7,
+        "color-tic": 6,
+        "seconds": 0
+    },
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "dartcatcher@gmail.com",
     "longName": "Neale's Watch",
@@ -29,7 +40,7 @@
         "basalt",
         "chalk"
     ],
-    "uuid": "e0b60de0-c43e-4dcd-817b-b60c1be26cb5",
+    "uuid": "8287a53c-1b7e-4f4b-9104-608de13b9f77",
     "versionLabel": "1.0",
     "watchapp": {
         "watchface": true
