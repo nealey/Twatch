@@ -232,11 +232,31 @@ static void bt_handler(bool connected) {
   layer_mark_dirty(s_date_layer);
 }
 
+static GColor color_of_int(int color) {
+#ifdef PBL_COLOR
+  return GColorFromHEX(color);
+#else
+  if (color & 0x808080) {
+    return GColorWhite;
+  } else {
+    return GColorBlack;
+  }
+#endif
+}
+
 static void in_received_handler(DictionaryIterator *rec, void *context) {
-  Tuple *sec_color_tuple = dict_find(rec, CONFIG_KEY_COLOR_SEC);
+  Tuple *sec_color_tuple = dict_find(rec, KEY_COLOR_SEC);
   
   if (sec_color_tuple) {
-    second_color = GColorFromHex(sec_color_tuple->value->int32);
+#ifdef PBL_COLOR
+    second_color = GColorFromHEX(sec_color_tuple->value->int32);
+#else
+    if (sec_color_tuple->value->int32) {
+      second_color = GColorWhite;
+    } else {
+      second_color = GColorBlack;
+    }
+#endif
   }
 }
 

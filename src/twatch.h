@@ -1,6 +1,19 @@
 #include <pebble.h>
 #pragma once
 
+typedef enum {
+  KEY_SECONDS = 0,
+  KEY_BT,
+  KEY_COLOR_BG,
+  KEY_COLOR_NUM,
+  KEY_COLOR_DAY,
+  KEY_COLOR_MON,
+  KEY_COLOR_TIC,
+  KEY_COLOR_SEC,
+  KEY_COLOR_MIN,
+  KEY_COLOR_HR
+} MessageKey;
+
 static const struct GPathInfo TIC_POINTS = {
   4, (GPoint []){
     {-3, -100},

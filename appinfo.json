@@ -1,6 +1,6 @@
 {
     "appKeys": {
-        "bluetooth": 1,
+        "bt": 1,
         "color-bg": 2,
         "color-day": 4,
         "color-hr": 9,
