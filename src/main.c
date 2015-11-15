@@ -1,6 +1,8 @@
 #include <pebble.h>
 #include "twatch.h"
 
+#define FORCE12H 0
+
 static Window *window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_bt_label, *s_day_label, *s_mon_label;
@@ -41,7 +43,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
   for (int i = 0; i < 4; i += 1) {
     int hour = 3 * (i+1);
 
-    if (1 && clock_is_24h_style()) {
+    if (!FORCE12H && clock_is_24h_style()) {
       time_t epoch;
       struct tm *now;
 
@@ -97,7 +99,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
   struct tm *t = localtime(&now);
   char *b = s_day_buffer;
 
-  if (bt_connected) {
+  if (bt_connected || (! bluetooth)) {
     text_layer_set_text(s_bt_label, "");
   } else {
     text_layer_set_text(s_bt_label, "");
@@ -228,7 +230,7 @@ static void window_unload(Window *window) {
 
 static void bt_handler(bool connected) {
   bt_connected = connected;
-  if (! connected) {
+  if (bluetooth && (! connected)) {
     vibes_long_pulse();
   }
   layer_mark_dirty(s_date_layer);
@@ -247,6 +249,43 @@ static GColor color_of_int(int color) {
 #endif
 }
 
+static void tick_subscribe() {
+  if (seconds) {
+    tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+  } else {
+    tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
+  }
+}
+
+static void restore(void) {
+  int i;
+  
+  for (i = 0; i < KEY_LAST; i += 1) {
+    if (! persist_exists(i)) {
+      continue;
+    }
+    
+    switch(i) {
+    case KEY_COLOR_FACE:
+    case KEY_COLOR_TIC:
+    case KEY_COLOR_NUM:
+    case KEY_COLOR_DAY:
+    case KEY_COLOR_MON:
+    case KEY_COLOR_SEC:
+    case KEY_COLOR_MIN:
+    case KEY_COLOR_HR:
+      colors[i] = color_of_int(persist_read_int(i));
+      break;
+    case KEY_SECONDS:
+      seconds = persist_read_bool(i);
+      tick_subscribe();
+    case KEY_BLUETOOTH:
+      bluetooth = persist_read_bool(i);
+      break;
+    }
+  }
+}
+
 static void in_received_handler(DictionaryIterator *rec, void *context) {
   int i;
   
@@ -262,16 +301,18 @@ static void in_received_handler(DictionaryIterator *rec, void *context) {
     case KEY_COLOR_SEC:
     case KEY_COLOR_MIN:
     case KEY_COLOR_HR:
-      colors[i] = color_of_int(cur->value->int32);
+      persist_write_int(i, cur->value->int32);
       break;
     case KEY_SECONDS:
-      seconds = !!cur->value->int32;
+      persist_write_bool(i, cur->value->int32);
       break;
     case KEY_BLUETOOTH:
-      bluetooth = !!cur->value->int32;
+      persist_write_bool(i, cur->value->int32);
       break;
     }
   }
+  
+  restore();
 }
 
 static void in_dropped_handler(AppMessageResult reason, void *context) {
@@ -311,18 +352,15 @@ static void init() {
   gpath_move_to(s_minute_arrow, center);
   gpath_move_to(s_hour_arrow, center);
 
+  tick_subscribe();
   bluetooth_connection_service_subscribe(bt_handler);
   bt_connected = bluetooth_connection_service_peek();
-  
-  if (seconds) {
-    tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
-  } else {
-    tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
-  }
   
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
   app_message_open(256, 64);
+  
+  restore();
 }
 
 static void deinit() {

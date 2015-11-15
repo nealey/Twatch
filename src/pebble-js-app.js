@@ -16,7 +16,7 @@ Pebble.addEventListener("ready", function() {
 
 Pebble.addEventListener("showConfiguration", function() {
   console.log("showing configuration");
-  Pebble.openURL('http://woozle.org/t/twatch/');
+  Pebble.openURL('http://woozle.org/neale/misc/twatch-config/');
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
