@@ -292,6 +292,11 @@ static void in_received_handler(DictionaryIterator *rec, void *context) {
   for (i = 0; i < KEY_LAST; i += 1) {
     Tuple *cur = dict_find(rec, i);
     
+    if (! cur) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Holy crap! Key %i isn't around!", i);
+      continue;
+    }
+    
     switch (i) {
     case KEY_COLOR_FACE:
     case KEY_COLOR_TIC:
@@ -323,10 +328,10 @@ static void init() {
   int i;
   
   for (i = 0; i < KEY_LAST; i += 1) {
-    colors[i] = GColorBlack;
+    colors[i] = GColorWhite;
   }
-  colors[KEY_COLOR_FACE] = GColorWhite;
-  colors[KEY_COLOR_SEC] = COLOR_FALLBACK(GColorWindsorTan, GColorBlack);
+  colors[KEY_COLOR_FACE] = GColorBlack;
+  colors[KEY_COLOR_SEC] = COLOR_FALLBACK(GColorWindsorTan, GColorWhite);
   
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {

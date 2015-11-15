@@ -15,10 +15,15 @@
         "configurable"
     ],
     "companyName": "dartcatcher@gmail.com",
-    "longName": "Neale's Watch",
+    "longName": "Twatch \u03b5",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/menu.png",
+                "name": "MENU_IMAGE",
+                "type": "png"
+            },
             {
                 "characterRegex": "[\uf10b]",
                 "file": "fonts/fontawesome-webfont.ttf",
@@ -34,14 +39,14 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Twatch",
+    "shortName": "Twatch \u03b5",
     "targetPlatforms": [
         "aplite",
         "basalt",
         "chalk"
     ],
     "uuid": "8287a53c-1b7e-4f4b-9104-608de13b9f77",
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }
