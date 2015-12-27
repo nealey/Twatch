@@ -99,10 +99,14 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
   struct tm *t = localtime(&now);
   char *b = s_day_buffer;
 
-  if (bt_connected || (! bluetooth)) {
-    text_layer_set_text(s_bt_label, "");
-  } else {
-    text_layer_set_text(s_bt_label, "");
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "blueteething: %d", bluetooth);
+  if (bluetooth) {
+    if (bt_connected) {
+      text_layer_set_text(s_bt_label, "");
+    } else {
+      text_layer_set_text(s_bt_label, "");
+    }
+    text_layer_set_text_color(s_bt_label, colors[KEY_COLOR_NUM]);
   }
   
   strftime(s_mon_buffer, sizeof(s_mon_buffer), "%b", t);
@@ -181,7 +185,6 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_bt_label, GTextAlignmentLeft);
   text_layer_set_text(s_bt_label, "");
   text_layer_set_background_color(s_bt_label, GColorClear);
-  text_layer_set_text_color(s_bt_label, colors[KEY_COLOR_TIC]);
   text_layer_set_font(s_bt_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SYMBOLS_52)));
   layer_add_child(s_date_layer, text_layer_get_layer(s_bt_label));
 
@@ -196,7 +199,6 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_mon_label, GTextAlignmentRight);
   text_layer_set_text(s_mon_label, s_mon_buffer);
   text_layer_set_background_color(s_mon_label, GColorClear);
-  text_layer_set_text_color(s_mon_label, colors[KEY_COLOR_MON]);
   layer_add_child(s_date_layer, text_layer_get_layer(s_mon_label));
 
   // Day
@@ -210,7 +212,6 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
-  text_layer_set_text_color(s_day_label, colors[KEY_COLOR_DAY]);
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
 
   s_hands_layer = layer_create(bounds);
@@ -309,10 +310,10 @@ static void in_received_handler(DictionaryIterator *rec, void *context) {
       persist_write_int(i, cur->value->int32);
       break;
     case KEY_SECONDS:
-      persist_write_bool(i, cur->value->int32);
+      persist_write_bool(i, !!cur->value->int32);
       break;
     case KEY_BLUETOOTH:
-      persist_write_bool(i, cur->value->int32);
+      persist_write_bool(i, !!cur->value->int32);
       break;
     }
   }
@@ -321,7 +322,7 @@ static void in_received_handler(DictionaryIterator *rec, void *context) {
 }
 
 static void in_dropped_handler(AppMessageResult reason, void *context) {
-  // What could we possibly do here?
+  // XXX: I don't understand what we could possibly do here
 }
 
 static void init() {
@@ -332,6 +333,8 @@ static void init() {
   }
   colors[KEY_COLOR_FACE] = GColorBlack;
   colors[KEY_COLOR_SEC] = COLOR_FALLBACK(GColorWindsorTan, GColorWhite);
+  
+  restore();
   
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
@@ -358,14 +361,17 @@ static void init() {
   gpath_move_to(s_hour_arrow, center);
 
   tick_subscribe();
+  
+#ifdef PBL_ROUND
+  bt_connected = true;
+#else
   bluetooth_connection_service_subscribe(bt_handler);
   bt_connected = bluetooth_connection_service_peek();
+#endif
   
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
   app_message_open(256, 64);
-  
-  restore();
 }
 
 static void deinit() {

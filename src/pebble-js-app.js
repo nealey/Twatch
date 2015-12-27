@@ -23,6 +23,9 @@ Pebble.addEventListener("webviewclosed", function(e) {
   console.log("configuration closed");
   // webview closed
   var options = JSON.parse(decodeURIComponent(e.response));
-  console.log("Options = " + JSON.stringify(options));
+  options.seconds = options.seconds?1:0;
+  //options.bluetooth = options.bluetooth?1:0;
+  options.bluetooth = 1;
+  console.log("Options = " + options);
   Pebble.sendAppMessage(options, appMessageAck, appMessageNak);
 });

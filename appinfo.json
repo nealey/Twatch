@@ -15,14 +15,15 @@
         "configurable"
     ],
     "companyName": "dartcatcher@gmail.com",
-    "longName": "Twatch \u03b5",
+    "longName": "Twatch Epsilon",
     "projectType": "native",
     "resources": {
         "media": [
             {
                 "file": "images/menu.png",
+                "menuIcon": true,
                 "name": "MENU_IMAGE",
-                "type": "png"
+                "type": "bitmap"
             },
             {
                 "characterRegex": "[\uf10b]",
@@ -39,14 +40,14 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Twatch \u03b5",
+    "shortName": "Twatch E",
     "targetPlatforms": [
         "aplite",
         "basalt",
         "chalk"
     ],
     "uuid": "8287a53c-1b7e-4f4b-9104-608de13b9f77",
-    "versionLabel": "1.1",
+    "versionLabel": "1.4",
     "watchapp": {
         "watchface": true
     }
